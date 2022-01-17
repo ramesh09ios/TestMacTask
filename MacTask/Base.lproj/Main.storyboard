@@ -726,6 +726,9 @@
                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
+                                <connections>
+                                    <action selector="textFieldTextAction:" target="XfG-lQ-9wD" id="H3F-YO-Syr"/>
+                                </connections>
                             </textField>
                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="DFE-hu-kfW">
                                 <rect key="frame" x="354" y="53" width="74" height="32"/>
@@ -753,6 +756,7 @@
                                 </buttonCell>
                                 <connections>
                                     <action selector="nextAndCancelPathAction:" target="XfG-lQ-9wD" id="urR-Ia-8Wy"/>
+                                    <segue destination="uja-Cs-bXu" kind="show" identifier="folderList" id="Ovn-ob-ILe"/>
                                 </connections>
                             </button>
                             <button verticalHuggingPriority="750" tag="1" translatesAutoresizingMaskIntoConstraints="NO" id="bbP-Qk-wFg">
@@ -797,7 +801,7 @@ Gw
                 </viewController>
                 <customObject id="rPt-NT-nkU" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="95.5" y="634"/>
+            <point key="canvasLocation" x="76" y="638"/>
         </scene>
         <!--Folder ListVC-->
         <scene sceneID="ZXc-zC-R5b">
@@ -809,12 +813,12 @@ Gw
                         <subviews>
                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="HDw-nW-qts">
                                 <rect key="frame" x="18" y="263" width="157" height="18"/>
-                                <buttonCell key="cell" type="check" title="Reuse SubDirectories" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="1UO-7l-vvR">
+                                <buttonCell key="cell" type="check" title="Reuse SubDirectories" bezelStyle="regularSquare" imagePosition="left" inset="2" id="1UO-7l-vvR">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="reuseAction:" target="uja-Cs-bXu" id="C7a-ll-XAU"/>
+                                    <action selector="reuseButtonSubDirectories:" target="uja-Cs-bXu" id="1u9-DJ-alP"/>
                                 </connections>
                             </button>
                             <searchField wantsLayer="YES" verticalHuggingPriority="750" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="9SN-Zi-nmU">

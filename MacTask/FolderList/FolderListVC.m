@@ -13,13 +13,16 @@
 {
     int selectedRow;
     NSMutableArray*filesArr;
+   
 }
 
 @end
 
 @implementation FolderListVC
 
-@synthesize directoryURL,progressLoader,fileList;
+@synthesize directoryURL,progressLoader,fileList,reuseButton;
+static const NSSize kWindowMinSize = {400, 350};
+static const NSSize kWindowMaxSize = {100500, 100500};
 
 - (instancetype)init
 {
@@ -31,32 +34,66 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-//    CGRect rect = CGRectMake(0, 0, 600, 800);
-    self.view.window.minSize = NSSizeFromCGSize(CGSizeMake(600, 800));
-    fileList = [[NSMutableArray alloc] init];
-    filesArr = [[NSMutableArray alloc] init];
    
-//    selectedurl = [[NSURL alloc] init];
-    if (directoryURL.absoluteString.length > 0){
-        [progressLoader startAnimation:nil];
-        NSError*error = nil;
-        unsigned long long allocatedSize;
-        //[self searchAllDireactories];
-        [self nr_getAllocatedSize:&allocatedSize ofDirectoryAtURL:self.directoryURL error:&error];
-    }
+//    self.view.window.contentMaxSize = CGSizeMake(500, 400);
+
+     //setMinSize:CGSizeMake(500, 400)];
+   // [self.view.window resizeIncrements];
+    
+                        //
+    
+   
+    
+    //    selectedurl = [[NSURL alloc] init];
+    [self updateFolderPaths];
     [self updateTableView];
-//    [_folderListTableView registerNib:[[NSNib alloc]initWithNibNamed:@"" bundle:nil] forIdentifier:<#(nonnull NSUserInterfaceItemIdentifier)#>];
     // Do view setup here.
+}
+
+- (void)viewWillAppear{
+    [super viewWillAppear];
+    self.view.window.delegate = self;
+//    NSRect frame;
+//    frame.size.height = 350;
+//    frame.size.width = 400;
+//    [self.view.window setFrame:frame display:YES animate:YES];
+    CGFloat xPos = NSWidth([[self.view.window screen] frame])/2 - NSWidth([self.view.window frame])/2;
+    CGFloat yPos = NSHeight([[self.view.window screen] frame])/2 - NSHeight([self.view.window frame])/2;
+    [self.view.window setFrame:NSMakeRect(xPos, yPos, NSWidth([self.view.window frame]), NSHeight([self.view.window frame])) display:YES];
+    
+    //[self.view.window displayIfNeeded];
 }
 
 -(void)updateTableView{
     [_folderListTableView setAction:@selector(tableCellSelectAction)];
-
     NSMenu* menu = [[NSMenu alloc] init];
-    [menu addItemWithTitle:@"Edit" action:@selector(tableViewEditItemClicked:) keyEquivalent:@""];
-    [menu addItemWithTitle:@"Delete" action:@selector(tableViewDeleteItemClicked) keyEquivalent:@""];
+//    [menu addItemWithTitle:@"Show in Finder" action:@selector(tableViewShowInfinderItemClicked:) keyEquivalent:@""];
+    [menu addItemWithTitle:@"Show in Finder" action:@selector(tableViewShowInfinderItemClicked) keyEquivalent:@""];
     [menu addItemWithTitle:@"Copy" action:@selector(tableViewCopyItemClicked) keyEquivalent:@""];
+    [menu addItemWithTitle:@"Details" action:@selector(tableViewDetailsItemClicked) keyEquivalent:@""];
     [_folderListTableView setMenu:menu];
+}
+
+- (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)frameSize
+{
+    frameSize.width = MAX(kWindowMinSize.width, MIN(kWindowMaxSize.width, frameSize.width));
+    frameSize.height = MAX(kWindowMinSize.height, MIN(kWindowMaxSize.height, frameSize.height));
+    return frameSize;
+}
+
+-(void)updateFolderPaths{
+    fileList = [[NSMutableArray alloc] init];
+    filesArr = [[NSMutableArray alloc] init];
+    if (directoryURL.absoluteString.length > 0){
+        [progressLoader startAnimation:nil];
+        NSError*error = nil;
+        unsigned long long allocatedSize;
+        if (reuseButton.state){
+            [self nr_getAllocatedSize:&allocatedSize ofDirectoryAtURL:self.directoryURL error:&error];
+        }else{
+            [self getOnlyFolders:directoryURL];
+        }
+    }
 }
 
 
@@ -79,13 +116,18 @@
 - (IBAction)folderOpenAndCloseAction:(id)sender {
     if ([sender tag] == 1){
         //Open
-        FoderListTableView*selectedCellData = [self->filesArr objectAtIndex:selectedRow];
-        [[NSWorkspace sharedWorkspace] openURL:selectedCellData.fileURL];
+        [self openSelectedFile];
     }else{
         //Close
         [self moveToViewController];
     }
 }
+
+-(void)openSelectedFile{
+    FoderListTableView*selectedCellData = [self->filesArr objectAtIndex:selectedRow];
+    [[NSWorkspace sharedWorkspace] openURL:selectedCellData.fileURL];
+}
+
 -(void)tableCellSelectAction{
     NSLog(@"%d",_folderListTableView.clickedRow);
     selectedRow = _folderListTableView.clickedRow;
@@ -95,6 +137,11 @@
 - (IBAction)reuseAction:(id)sender {
     
 }
+
+- (IBAction)reuseButtonSubDirectories:(NSButton *)sender {
+    [self updateFolderPaths];
+}
+
 
 -(void)moveToViewController{
     ViewController* vc = [[self storyboard] instantiateControllerWithIdentifier:@"ViewController"];
@@ -107,7 +154,6 @@
 {
     return  [filesArr count];
 }
-
 
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row{
     NSString*table_identifier = [tableView identifier];
@@ -133,25 +179,62 @@
 }
 
 - (void)tableView:(NSTableView *)tableView didClickTableColumn:(NSTableColumn *)tableColumn{
-    
 }
 
 //MEnu options
--(void)tableViewEditItemClicked{
+-(void)tableViewDetailsItemClicked{
     if (_folderListTableView.clickedRow >= 0){
-        FoderListTableView*file = [filesArr objectAtIndex:_folderListTableView.clickedRow];
+       // FoderListTableView*file = [filesArr objectAtIndex:_folderListTableView.clickedRow];
+        [self openSelectedFile];
     }
 }
--(void)tableViewDeleteItemClicked{
+
+-(void)tableViewShowInfinderItemClicked{
     if (_folderListTableView.clickedRow >= 0){
-        FoderListTableView*file = [filesArr objectAtIndex:_folderListTableView.clickedRow];
+        //FoderListTableView*file = [filesArr objectAtIndex:_folderListTableView.clickedRow];
+        [self openSelectedFile];
     }
 }
+
 -(void)tableViewCopyItemClicked{
     if (_folderListTableView.clickedRow >= 0){
         FoderListTableView*file = [filesArr objectAtIndex:_folderListTableView.clickedRow];
         NSLog(@"Copy Path: %@",file.fileURL);
+        //Past board access
+        NSPasteboard*pastBoard = [NSPasteboard generalPasteboard];
+        [pastBoard clearContents];
+        [pastBoard setData:file.fileURL.dataRepresentation forType:NSPasteboardTypeFileURL];
     }
+}
+
+
+-(void)getOnlyFolders:(NSURL*)url{
+    NSArray *subpaths;
+    NSError *error;
+//    NSString *fontPath = @"/System/Library/Fonts";
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+        subpaths = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:url includingPropertiesForKeys:[[NSArray alloc] initWithObjects:NSURLNameKey, nil] options:NSDirectoryEnumerationSkipsHiddenFiles error:&error];
+
+//        subpaths = [fileManager subpathsAtPath:paths];
+//        subpaths = [fileManager subpathsOfDirectoryAtPath:paths error:&error];
+//        subpaths = [fileManager contentsOfDirectoryAtPath:paths error:&error];
+       // subpaths = [fileManager contentsOfDirectoryAtURL:<#(nonnull NSURL *)#> includingPropertiesForKeys:(nullable NSArray<NSURLResourceKey> *) options:<#(NSDirectoryEnumerationOptions)#> error:<#(NSError *__autoreleasing  _Nullable * _Nullable)#>];
+
+    
+    for (NSURL *contentItemURL in subpaths) {
+        NSString*fileStr = contentItemURL.absoluteString;
+        FoderListTableView*fileDetails = [[FoderListTableView alloc] init];
+        NSString*lastPath = fileStr.lastPathComponent;
+        fileDetails.name = lastPath;
+        fileDetails.fileURL = contentItemURL;
+        fileDetails.type = [lastPath containsString:@"."] ? [[lastPath componentsSeparatedByString:@"."] lastObject] : @"";
+        fileDetails.size = @"";
+        [fileList addObject:fileDetails];
+    }
+    filesArr = fileList.copy;
+    [progressLoader stopAnimation:nil];
+    [progressLoader setHidden:YES];
+    [self.folderListTableView reloadData];
 }
 
 - (BOOL)nr_getAllocatedSize:(unsigned long long *)size ofDirectoryAtURL:(NSURL *)directoryURL error:(NSError * __autoreleasing *)error
@@ -189,9 +272,9 @@
     
     for (NSURL *contentItemURL in enumerator) {
         NSString*fileStr = contentItemURL.absoluteString;
-        if ([fileStr isEqualToString:@".DS_Store"]){
-            continue;
-        }
+//        if ([fileStr isEqualToString:@".DS_Store"]){
+//            continue;
+//        }
         NSLog(@"%@",fileStr);
         FoderListTableView*fileDetails = [[FoderListTableView alloc] init];
         NSString*lastPath = fileStr.lastPathComponent;

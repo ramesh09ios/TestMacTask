@@ -8,7 +8,7 @@
 #import "ViewController.h"
 #import "FolderListVC.h"
 
-@interface ViewController()
+@interface ViewController()<NSTextFieldDelegate>
 {
     NSURL*folderPath;
 
@@ -38,10 +38,23 @@
         [self closeWindow];
     }else{
         //Next
-        [self moveToSubFolderListWindow];
+        //[self moveToSubFolderListWindow];
         //[self closeWindow];
     }
 }
+- (IBAction)textFieldTextAction:(NSTextField *)sender {
+    NSString*enterText = sender.stringValue;
+    if ([enterText hasPrefix:@"file:///"] && [enterText hasSuffix:@"/"]){
+        NSURL *url = [NSURL URLWithString:enterText];
+        [self updateFilePath:url];
+    }
+}
+
+- (BOOL)textField:(NSTextField *)textField textView:(NSTextView *)textView shouldSelectCandidateAtIndex:(NSUInteger)index {
+    NSLog(@"%@",textField.stringValue);
+    return YES;
+}
+
 
 -(void)closeWindow{
     [[[NSApplication sharedApplication] mainWindow] close];
@@ -54,17 +67,28 @@
 }
 
 - (IBAction)selectPathAction:(id)sender {
-    
     NSOpenPanel*panel = [NSOpenPanel openPanel];
     panel.canChooseDirectories = YES;
     panel.canChooseFiles = NO;
     [panel beginWithCompletionHandler:^(NSModalResponse result) {
         if (result > 0){
-            self->folderPath = panel.URL;
-            self.pathTextField.stringValue = self->folderPath.absoluteString;
-            [self.nextBtn setEnabled:true];
+            [self updateFilePath:panel.URL];
         }
     }];
 }
+
+-(void)updateFilePath:(NSURL*)panel{
+    self->folderPath = panel;
+    self.pathTextField.stringValue = self->folderPath.absoluteString;
+    [self.nextBtn setEnabled:true];
+}
+
+- (void)prepareForSegue:(NSStoryboardSegue *)segue sender:(id)sender{
+    FolderListVC*folderListVc = (FolderListVC*)[segue destinationController];
+    folderListVc.directoryURL = folderPath;
+    [self closeWindow];
+}
+
+
 
 @end
